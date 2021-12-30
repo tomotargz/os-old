@@ -1,3 +1,7 @@
+// Uefi core header
+#include <Uefi.h>
+
+// Uefi headers
 #include <Guid/FileInfo.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
@@ -7,8 +11,9 @@
 #include <Protocol/DiskIo2.h>
 #include <Protocol/LoadedImage.h>
 #include <Protocol/SimpleFileSystem.h>
-#include <Uefi.h>
 
+// Other headers
+#include "ProcessorBind.h"
 #include "frame_buffer_config.hpp"
 
 struct MemoryMap {
@@ -34,39 +39,39 @@ EFI_STATUS GetMemoryMap(struct MemoryMap* map) {
 const CHAR16* GetMemoryTypeUnicode(EFI_MEMORY_TYPE type) {
     switch (type) {
         case EfiReservedMemoryType:
-            return L"EfiReservedMemoryType";
+            return (CHAR16*)L"EfiReservedMemoryType";
         case EfiLoaderCode:
-            return L"EfiLoaderCode";
+            return (CHAR16*)L"EfiLoaderCode";
         case EfiLoaderData:
-            return L"EfiLoaderData";
+            return (CHAR16*)L"EfiLoaderData";
         case EfiBootServicesCode:
-            return L"EfiBootServicesCode";
+            return (CHAR16*)L"EfiBootServicesCode";
         case EfiBootServicesData:
-            return L"EfiBootServicesData";
+            return (CHAR16*)L"EfiBootServicesData";
         case EfiRuntimeServicesCode:
-            return L"EfiRuntimeServicesCode";
+            return (CHAR16*)L"EfiRuntimeServicesCode";
         case EfiRuntimeServicesData:
-            return L"EfiRuntimeServicesData";
+            return (CHAR16*)L"EfiRuntimeServicesData";
         case EfiConventionalMemory:
-            return L"EfiConventionalMemory";
+            return (CHAR16*)L"EfiConventionalMemory";
         case EfiUnusableMemory:
-            return L"EfiUnusableMemory";
+            return (CHAR16*)L"EfiUnusableMemory";
         case EfiACPIReclaimMemory:
-            return L"EfiACPIReclaimMemory";
+            return (CHAR16*)L"EfiACPIReclaimMemory";
         case EfiACPIMemoryNVS:
-            return L"EfiACPIMemoryNVS";
+            return (CHAR16*)L"EfiACPIMemoryNVS";
         case EfiMemoryMappedIO:
-            return L"EfiMemoryMappedIO";
+            return (CHAR16*)L"EfiMemoryMappedIO";
         case EfiMemoryMappedIOPortSpace:
-            return L"EfiMemoryMappedIOPortSpace";
+            return (CHAR16*)L"EfiMemoryMappedIOPortSpace";
         case EfiPalCode:
-            return L"EfiPalCode";
+            return (CHAR16*)L"EfiPalCode";
         case EfiPersistentMemory:
-            return L"EfiPersistentMemory";
+            return (CHAR16*)L"EfiPersistentMemory";
         case EfiMaxMemoryType:
-            return L"EfiMaxMemoryType";
+            return (CHAR16*)L"EfiMaxMemoryType";
         default:
-            return L"InvalidMemoryType";
+            return (CHAR16*)L"InvalidMemoryType";
     }
 }
 
@@ -83,7 +88,7 @@ EFI_STATUS SaveMemoryMap(struct MemoryMap* map, EFI_FILE_PROTOCOL* file) {
         return status;
     }
 
-    Print(L"map->buffer = %08lx, map->map_size = %08lx\n", map->buffer,
+    Print((CHAR16*)L"map->buffer = %08lx, map->map_size = %08lx\n", map->buffer,
           map->map_size);
 
     EFI_PHYSICAL_ADDRESS iter;
@@ -155,17 +160,17 @@ EFI_STATUS OpenGOP(EFI_HANDLE image_handle,
 const CHAR16* GetPixelFormatUnicode(EFI_GRAPHICS_PIXEL_FORMAT fmt) {
     switch (fmt) {
         case PixelRedGreenBlueReserved8BitPerColor:
-            return L"PixelRedGreenBlueReserved8BitPerColor";
+            return (CHAR16*)L"PixelRedGreenBlueReserved8BitPerColor";
         case PixelBlueGreenRedReserved8BitPerColor:
-            return L"PixelBlueGreenRedReserved8BitPerColor";
+            return (CHAR16*)L"PixelBlueGreenRedReserved8BitPerColor";
         case PixelBitMask:
-            return L"PixelBitMask";
+            return (CHAR16*)L"PixelBitMask";
         case PixelBltOnly:
-            return L"PixelBltOnly";
+            return (CHAR16*)L"PixelBltOnly";
         case PixelFormatMax:
-            return L"PixelFormatMax";
+            return (CHAR16*)L"PixelFormatMax";
         default:
-            return L"InvalidPixelFormat";
+            return (CHAR16*)L"InvalidPixelFormat";
     }
 }
 
@@ -177,39 +182,39 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
                            EFI_SYSTEM_TABLE* system_table) {
     EFI_STATUS status;
 
-    Print(L"Hello, Mikan World!\n");
+    Print((CHAR16*)L"Hello, Mikan World!\n");
 
     CHAR8 memmap_buf[4096 * 4];
     struct MemoryMap memmap = {sizeof(memmap_buf), memmap_buf, 0, 0, 0, 0};
     status = GetMemoryMap(&memmap);
     if (EFI_ERROR(status)) {
-        Print(L"failed to get memory map: %r\n", status);
+        Print((CHAR16*)L"failed to get memory map: %r\n", status);
         Halt();
     }
 
     EFI_FILE_PROTOCOL* root_dir;
     status = OpenRootDir(image_handle, &root_dir);
     if (EFI_ERROR(status)) {
-        Print(L"failed to open root directory: %r\n", status);
+        Print((CHAR16*)L"failed to open root directory: %r\n", status);
         Halt();
     }
 
     EFI_FILE_PROTOCOL* memmap_file;
     status = root_dir->Open(
-        root_dir, &memmap_file, L"\\memmap",
+        root_dir, &memmap_file, (CHAR16*)L"\\memmap",
         EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
     if (EFI_ERROR(status)) {
-        Print(L"failed to open file '\\memmap': %r\n", status);
-        Print(L"Ignored.\n");
+        Print((CHAR16*)L"failed to open file '\\memmap': %r\n", status);
+        Print((CHAR16*)L"Ignored.\n");
     } else {
         status = SaveMemoryMap(&memmap, memmap_file);
         if (EFI_ERROR(status)) {
-            Print(L"failed to save memory map: %r\n", status);
+            Print((CHAR16*)L"failed to save memory map: %r\n", status);
             Halt();
         }
         status = memmap_file->Close(memmap_file);
         if (EFI_ERROR(status)) {
-            Print(L"failed to close memory map: %r\n", status);
+            Print((CHAR16*)L"failed to close memory map: %r\n", status);
             Halt();
         }
     }
@@ -217,16 +222,16 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
     status = OpenGOP(image_handle, &gop);
     if (EFI_ERROR(status)) {
-        Print(L"failed to open GOP: %r\n", status);
+        Print((CHAR16*)L"failed to open GOP: %r\n", status);
         Halt();
     }
 
-    Print(L"Resolution: %ux%u, Pixel Format: %s, %u pixels/line\n",
+    Print((CHAR16*)L"Resolution: %ux%u, Pixel Format: %s, %u pixels/line\n",
           gop->Mode->Info->HorizontalResolution,
           gop->Mode->Info->VerticalResolution,
           GetPixelFormatUnicode(gop->Mode->Info->PixelFormat),
           gop->Mode->Info->PixelsPerScanLine);
-    Print(L"Frame Buffer: 0x%0lx - 0x%0lx, Size: %lu bytes\n",
+    Print((CHAR16*)L"Frame Buffer: 0x%0lx - 0x%0lx, Size: %lu bytes\n",
           gop->Mode->FrameBufferBase,
           gop->Mode->FrameBufferBase + gop->Mode->FrameBufferSize,
           gop->Mode->FrameBufferSize);
@@ -237,10 +242,10 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     }
 
     EFI_FILE_PROTOCOL* kernel_file;
-    status = root_dir->Open(root_dir, &kernel_file, L"\\kernel.elf",
+    status = root_dir->Open(root_dir, &kernel_file, (CHAR16*)L"\\kernel.elf",
                             EFI_FILE_MODE_READ, 0);
     if (EFI_ERROR(status)) {
-        Print(L"failed to open file '\\kernel.elf': %r\n", status);
+        Print((CHAR16*)L"failed to open file '\\kernel.elf': %r\n", status);
         Halt();
     }
 
@@ -249,7 +254,7 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     status = kernel_file->GetInfo(kernel_file, &gEfiFileInfoGuid,
                                   &file_info_size, file_info_buffer);
     if (EFI_ERROR(status)) {
-        Print(L"failed to get file information: %r\n", status);
+        Print((CHAR16*)L"failed to get file information: %r\n", status);
         Halt();
     }
 
@@ -262,29 +267,30 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
                                 (kernel_file_size + 0xfff) / 0x1000,
                                 &kernel_base_addr);
     if (EFI_ERROR(status)) {
-        Print(L"failed to allocate pages: %r", status);
+        Print((CHAR16*)L"failed to allocate pages: %r", status);
         Halt();
     }
     // #@@range_end(alloc_error)
     status = kernel_file->Read(kernel_file, &kernel_file_size,
                                (VOID*)kernel_base_addr);
     if (EFI_ERROR(status)) {
-        Print(L"error: %r", status);
+        Print((CHAR16*)L"error: %r", status);
         Halt();
     }
-    Print(L"Kernel: 0x%0lx (%lu bytes)\n", kernel_base_addr, kernel_file_size);
+    Print((CHAR16*)L"Kernel: 0x%0lx (%lu bytes)\n", kernel_base_addr,
+          kernel_file_size);
 
     // #@@range_begin(exit_bs)
     status = gBS->ExitBootServices(image_handle, memmap.map_key);
     if (EFI_ERROR(status)) {
         status = GetMemoryMap(&memmap);
         if (EFI_ERROR(status)) {
-            Print(L"failed to get memory map: %r\n", status);
+            Print((CHAR16*)L"failed to get memory map: %r\n", status);
             Halt();
         }
         status = gBS->ExitBootServices(image_handle, memmap.map_key);
         if (EFI_ERROR(status)) {
-            Print(L"Could not exit boot service: %r\n", status);
+            Print((CHAR16*)L"Could not exit boot service: %r\n", status);
             Halt();
         }
     }
@@ -305,7 +311,7 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
             config.pixel_format = kPixelBGRResv8BitPerColor;
             break;
         default:
-            Print(L"Unimplemented pixel format: %d\n",
+            Print((CHAR16*)L"Unimplemented pixel format: %d\n",
                   gop->Mode->Info->PixelFormat);
             Halt();
     }
@@ -315,7 +321,7 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     entry_point(&config);
     // #@@range_end(pass_frame_buffer_config)
 
-    Print(L"All done\n");
+    Print((CHAR16*)L"All done\n");
 
     while (1)
         ;
