@@ -10,17 +10,19 @@ Console::Console(PixelWriter& writer, const PixelColor& fg_color,
       fg_color_(fg_color),
       bg_color_(bg_color),
       buffer_(),
-      cursor_row_(0),
-      cursor_column_(0) {}
+      buf_begin_(0),
+      buf_wp_row_(0),
+      buf_wp_col_(0) {}
 
 void Console::PutString(const char* s) {
   while (*s) {
     if (*s == '\n') {
       Newline();
-    } else if (cursor_column_ < kColumns - 1) {
-      WriteAscii(writer_, 8 * cursor_column_, 16 * cursor_row_, *s, fg_color_);
-      buffer_[cursor_row_][cursor_column_] = *s;
-      ++cursor_column_;
+    } else if (buf_wp_col_ < kColumns - 1) {
+      WriteAscii(writer_, 8 * buf_wp_col_,
+                 16 * (buf_wp_row_ - buf_begin_) % kRows, *s, fg_color_);
+      buffer_[buf_wp_row_][buf_wp_col_] = *s;
+      ++buf_wp_col_;
     }
     ++s;
   }
@@ -35,15 +37,19 @@ void Console::Clear() {
 }
 
 void Console::Newline() {
-  cursor_column_ = 0;
-  if (cursor_row_ < kRows - 1) {
-    ++cursor_row_;
-  } else {
+  buf_wp_row_ = (buf_wp_row_ + 1) % kRows;
+  buf_wp_col_ = 0;
+  if (buf_wp_row_ == buf_begin_) {
+    memset(buffer_[buf_wp_row_], 0, kRows);
+    buf_begin_ = (buf_begin_ + 1) % kRows;
     Clear();
-    for (int row = 0; row < kRows - 1; ++row) {
-      memcpy(buffer_[row], buffer_[row + 1], kColumns + 1);
-      WriteString(writer_, 0, 16 * row, buffer_[row], fg_color_);
-    }
-    memset(buffer_[kRows - 1], 0, kColumns + 1);
+    ShowBuffer();
+  }
+}
+
+void Console::ShowBuffer() {
+  for (int r = 0; r < kRows; ++r) {
+    WriteString(writer_, 0, 16 * r, buffer_[(buf_begin_ + r) % kRows],
+                fg_color_);
   }
 }
