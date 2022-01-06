@@ -6,8 +6,7 @@
 #include "font.hpp"
 #include "frame_buffer_config.hpp"
 #include "graphics.hpp"
-
-void* operator new(size_t size, void* buf) { return buf; }
+#include "pci.hpp"
 
 void operator delete(void* obj) noexcept {}
 
@@ -84,7 +83,7 @@ extern "C" void KernelMain(const FrameBufferConfig& frame_buffer_config) {
 
   console = new (console_buf)
       Console(*pixel_writer, kDesktopFGColor, kDesktopBGColor);
-  console->PutString("now, my os has a mouse cursor :D");
+  console->PutString("Look this! They are PCI devices! :D\n");
 
   // draw a mouse cursor
   for (int dy = 0; dy < kMouseCursorHeight; ++dy) {
@@ -95,6 +94,17 @@ extern "C" void KernelMain(const FrameBufferConfig& frame_buffer_config) {
         pixel_writer->Write(200 + dx, 100 + dy, {255, 255, 255});
       }
     }
+  }
+
+  auto err = pci::ScanAllBus();
+  printk("ScanAllBus: %s\n", err.Name());
+
+  for (int i = 0; i < pci::num_device; ++i) {
+    const auto& dev = pci::devices[i];
+    auto vendor_id = pci::ReadVenderId(dev.bus, dev.device, dev.function);
+    auto class_code = pci::ReadClassCode(dev.bus, dev.device, dev.function);
+    printk("%d.%d.%d: vend %04x, class %08x, head %02x\n", dev.bus, dev.device,
+           dev.function, vendor_id, class_code, dev.header_type);
   }
 
   while (1) __asm__("hlt");

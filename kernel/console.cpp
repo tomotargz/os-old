@@ -20,7 +20,7 @@ void Console::PutString(const char* s) {
       Newline();
     } else if (buf_wp_col_ < kColumns - 1) {
       WriteAscii(writer_, 8 * buf_wp_col_,
-                 16 * (buf_wp_row_ - buf_begin_) % kRows, *s, fg_color_);
+                 16 * ((buf_wp_row_ - buf_begin_) % kRows), *s, fg_color_);
       buffer_[buf_wp_row_][buf_wp_col_] = *s;
       ++buf_wp_col_;
     }
