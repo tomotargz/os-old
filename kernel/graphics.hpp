@@ -38,6 +38,12 @@ class BGRResv8BitPerColorPixelWriter : public PixelWriter {
 template <typename T>
 struct Vector2D {
   T x, y;
+
+  Vector2D<T>& operator+=(const Vector2D<T>& rhs) {
+    x += rhs.x;
+    y += rhs.y;
+    return *this;
+  }
 };
 
 void DrawRectangle(PixelWriter& writer, const Vector2D<int>& pos,
